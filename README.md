@@ -4,7 +4,7 @@ ROSトピックで受講した画像からSSDで物体検出
 アルゴリズムはこれ  
 https://github.com/weiliu89/caffe/tree/ssd  
 利用した実装はこれ  
-https://github.com/rykov8/ssd_keras
+https://github.com/rykov8/ssd_keras  a
 利用する重み付けデータはこれ  
 https://mega.nz/#F!7RowVLCL!q3cEVRK9jyOSB9el3SssIA
 
@@ -14,6 +14,9 @@ https://mega.nz/#F!7RowVLCL!q3cEVRK9jyOSB9el3SssIA
 
 # 発行トピック
 /class_num
+入力：カメラ画像
 
 # 購読トピック
 /usb_cam/image_raw
+出力：ラベル，検出された四角形の座標，四角形の辺の長さ
+[ラベル, x_min, y_min, x_length, y_length]
