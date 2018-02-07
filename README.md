@@ -13,10 +13,10 @@ https://mega.nz/#F!7RowVLCL!q3cEVRK9jyOSB9el3SssIA
 * `img_path`を編集して適当な画像にパスを通す(一度`prediction`を実行しないと以後正常に動かなくなるため．kerasかtensorflowのバグ？)
 
 # 発行トピック
-/class_num
-入力：カメラ画像
+topic: /class_num  
+入力： カメラ画像
 
 # 購読トピック
-/usb_cam/image_raw
-出力：ラベル，検出された四角形の座標，四角形の辺の長さ
+topic: /usb_cam/image_raw  
+出力：ラベル，検出された四角形の座標，四角形の辺の長さ  
 [ラベル, x_min, y_min, x_length, y_length]
