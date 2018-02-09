@@ -20,8 +20,8 @@ git clone https://github.com/raucha/ssd_ros
 * `img_path`を編集して適当な画像にパスを通す(一度`prediction`を実行しないと以後正常に動かなくなるため．kerasかtensorflowのバグ？)
 
 # 起動
-`rosrun pythontest ssd_ros.py`
-`
+`rosrun pythontest ssd_ros.py`  
+
 カメラはこれを使う  
 http://wiki.ros.org/uvc_camera  
 
