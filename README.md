@@ -16,6 +16,7 @@ git clone https://github.com/raucha/ssd_ros
 ````
 * ライブラリのインストール
   * `sudo -H pip install keras tensorflow`
+  * or `sudo -H pip install keras tensorflow-gpu`
 * ダウンロードした`weights_SSD300.hdf5`を適当な場所におき，`model.load_weights(....)`を編集してパスを通す
 * `img_path`を編集して適当な画像にパスを通す(一度`prediction`を実行しないと以後正常に動かなくなるため．kerasかtensorflowのバグ？)
 
