@@ -22,7 +22,7 @@ git clone https://github.com/raucha/ssd_ros
 # 起動
 `rosrun pythontest ssd_ros.py`  
 
-カメラはこれを使う  
+カメラはこれとかを使って画像のトピックを流す  
 http://wiki.ros.org/uvc_camera  
 
 # 発行トピック
