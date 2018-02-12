@@ -46,12 +46,11 @@ bbox_util = BBoxUtility(NUM_CLASSES)
 
 # 事前に適当に呼び出しておく
 inputs = []
-images = []
-img_path = '/home/akio-ubuntu/github/ssd_keras/pics/fish-bike.jpg'
-img = image.load_img(img_path, target_size=(300, 300))
-img = image.img_to_array(img)
-images.append(imread(img_path))
-inputs.append(img.copy())
+# img_path = '/home/akio-ubuntu/github/ssd_keras/pics/fish-bike.jpg'
+# img = image.load_img(img_path, target_size=(300, 300))
+# img = image.img_to_array(img)
+img = np.zeros((300,300,3))
+inputs.append(img)
 inputs = preprocess_input(np.array(inputs))
 
 preds = model.predict(inputs, batch_size=1, verbose=1)
@@ -90,15 +89,12 @@ def get_class(arg):
     # rospy.loginfo("got image")
     # 入力画像の設定
     inputs = []
-    images = []
     # img_path = './pics/boys.jpg'
     # img = image.load_img(img_path, target_size=(300, 300))
     # img = image.img_to_array(img)
-    # images.append(imread(img_path))
     # inputs.append(img.copy())
     img = cv2.resize(cv_image, (300, 300))
     # print cv_image.shape
-    images.append(img)
     inputs.append(img)
     inputs = preprocess_input(
         np.array(inputs, dtype="float32"))
@@ -112,8 +108,6 @@ def get_class(arg):
     # a = model.predict(inputs, batch_size=1)
     # b = bbox_util.detection_out(preds)
 
-    # 画像1枚なので要らない
-    # for i, img in enumerate(images):
     # Parse the outputs.
     # 画像は1枚なので全て[0]の結果を利用する
     det_label = results[0][:, 0]
