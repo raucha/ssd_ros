@@ -135,7 +135,7 @@ def get_class(arg):
 
     # キャンバス生成
     fig = plt.figure()
-    plt.imshow(img / 255.)
+    plt.imshow(cv_image / 255.)
     currentAxis = fig.gca()
     # currentAxis = plt.gca()
     # クラスごとの色生成
@@ -143,10 +143,10 @@ def get_class(arg):
 
     # 検出された各物体に対してループ
     for i in range(top_conf.shape[0]):
-        xmin = int(round(top_xmin[i] * img.shape[1]))
-        ymin = int(round(top_ymin[i] * img.shape[0]))
-        xmax = int(round(top_xmax[i] * img.shape[1]))
-        ymax = int(round(top_ymax[i] * img.shape[0]))
+        xmin = int(round(top_xmin[i] * cv_image.shape[1]))
+        ymin = int(round(top_ymin[i] * cv_image.shape[0]))
+        xmax = int(round(top_xmax[i] * cv_image.shape[1]))
+        ymax = int(round(top_ymax[i] * cv_image.shape[0]))
         score = top_conf[i]
         label = int(top_label_indices[i])
         label_name = voc_classes[label - 1]
