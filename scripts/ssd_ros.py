@@ -55,37 +55,39 @@ inputs.append(img.copy())
 inputs = preprocess_input(np.array(inputs))
 
 preds = model.predict(inputs, batch_size=1, verbose=1)
+pub_array = None
+pub_image = None
+LATEST_IMAGE = None
 
-rospy.init_node('ssd_test', anonymous=True)
-pub = rospy.Publisher('/class_num', String, queue_size=10)
 
 def callback(data):
-    bridge = CvBridge()
-    try:
-        cv_image = bridge.imgmsg_to_cv2(data, "bgr8")
-    except CvBridgeError as e:
-        print(e)
-    get_class(cv_image)
-    # (rows,cols,channels) = cv_image.shape
+    global LATEST_IMAGE
+    LATEST_IMAGE = data
+    return
 
 
 def main():
-    # rospy.init_node('ssd_test', anonymous=True)
-    # pub = rospy.Publisher('/class_num', Int32, queue_size=10)
-    rospy.Subscriber("/usb_cam/image_raw", Image, callback)
+    rospy.init_node('ros_ssd', anonymous=False)
+    global pub_array, pub_image
+    pub_array = rospy.Publisher('/class_num', String, queue_size=10)
+    pub_image = rospy.Publisher('/classed_image', Image, queue_size=10)
+    rospy.Subscriber("/usb_cam/image_raw", Image, callback, queue_size=1)
     rate = rospy.Rate(10) # 10hz
     while not rospy.is_shutdown():
-        # hello_str = "hello world %s" % rospy.get_time()
-        # rospy.loginfo(hello_str)
-        # twi = Twist()
-        # twi.linear.x = 0
-        # twi.angular.z = 90*3.14/180.0
-        # pub.publish(twi)
+        if LATEST_IMAGE is not None:
+            get_class(LATEST_IMAGE)
         rate.sleep()
 
 
 def get_class(arg):
-    rospy.loginfo("got image")
+    ## 認識用の画像の準備
+    try:
+        cv_image = CvBridge().imgmsg_to_cv2(arg, "rgb8")
+        # cv_image = CvBridge().imgmsg_to_cv2(arg, "bgr8")
+    except CvBridgeError as e:
+        print(e)
+    # (rows,cols,channels) = cv_image.shape
+    # rospy.loginfo("got image")
     # 入力画像の設定
     inputs = []
     images = []
@@ -94,83 +96,81 @@ def get_class(arg):
     # img = image.img_to_array(img)
     # images.append(imread(img_path))
     # inputs.append(img.copy())
-    img = cv2.resize(arg, (300, 300))
-    # print arg.shape
+    img = cv2.resize(cv_image, (300, 300))
+    # print cv_image.shape
     images.append(img)
     inputs.append(img)
     inputs = preprocess_input(
         np.array(inputs, dtype="float32"))
     # print inputs
 
-
     # クラス分け実行
     preds = model.predict(inputs, batch_size=1, verbose=1)
-
     results = bbox_util.detection_out(preds)
 
-    # %%time
-    a = model.predict(inputs, batch_size=1)
-    b = bbox_util.detection_out(preds)
+    # # %%time
+    # a = model.predict(inputs, batch_size=1)
+    # b = bbox_util.detection_out(preds)
+
+    # 画像1枚なので要らない
+    # for i, img in enumerate(images):
+    # Parse the outputs.
+    # 画像は1枚なので全て[0]の結果を利用する
+    det_label = results[0][:, 0]
+    det_conf = results[0][:, 1]
+    det_xmin = results[0][:, 2]
+    det_ymin = results[0][:, 3]
+    det_xmax = results[0][:, 4]
+    det_ymax = results[0][:, 5]
+
+    # Get detections with confidence higher than 0.6.
+    top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.6]
+    top_conf = det_conf[top_indices]
+    top_label_indices = det_label[top_indices].tolist()
+    top_xmin = det_xmin[top_indices]
+    top_ymin = det_ymin[top_indices]
+    top_xmax = det_xmax[top_indices]
+    top_ymax = det_ymax[top_indices]
 
 
-    for i, img in enumerate(images):
-        # Parse the outputs.
-        det_label = results[i][:, 0]
-        det_conf = results[i][:, 1]
-        det_xmin = results[i][:, 2]
-        det_ymin = results[i][:, 3]
-        det_xmax = results[i][:, 4]
-        det_ymax = results[i][:, 5]
+    # キャンバス生成
+    fig = plt.figure()
+    plt.imshow(img / 255.)
+    currentAxis = fig.gca()
+    # currentAxis = plt.gca()
+    # クラスごとの色生成
+    colors = plt.cm.hsv(np.linspace(0, 1, 21)).tolist()
 
-        # Get detections with confidence higher than 0.6.
-        top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.6]
-
-        top_conf = det_conf[top_indices]
-        top_label_indices = det_label[top_indices].tolist()
-        top_xmin = det_xmin[top_indices]
-        top_ymin = det_ymin[top_indices]
-        top_xmax = det_xmax[top_indices]
-        top_ymax = det_ymax[top_indices]
-
-        # colors = plt.cm.hsv(np.linspace(0, 1, 21)).tolist()
-
-        # plt.imshow(img / 255.)
-        # currentAxis = plt.gca()
-
-        # for i in range(top_conf.shape[0]):
-        #     xmin = int(round(top_xmin[i] * img.shape[1]))
-        #     ymin = int(round(top_ymin[i] * img.shape[0]))
-        #     xmax = int(round(top_xmax[i] * img.shape[1]))
-        #     ymax = int(round(top_ymax[i] * img.shape[0]))
-        #     score = top_conf[i]
-        #     label = int(top_label_indices[i])
-        #     label_name = voc_classes[label - 1]
-        #     display_txt = '{:0.2f}, {}'.format(score, label_name)
-        #     coords = (xmin, ymin), xmax-xmin+1, ymax-ymin+1
-        #     color = colors[label]
-        #     currentAxis.add_patch(plt.Rectangle(*coords, fill=False, edgecolor=color, linewidth=2))
-        #     currentAxis.text(xmin, ymin, display_txt, bbox={'facecolor':color, 'alpha':0.5})
-        # plt.show()
-        # for i in range(top_conf.shape[0]):
-        xmin = int(round(top_xmin[0] * img.shape[1]))
-        ymin = int(round(top_ymin[0] * img.shape[0]))
-        xmax = int(round(top_xmax[0] * img.shape[1]))
-        ymax = int(round(top_ymax[0] * img.shape[0]))
-        score = top_conf[0]
-        label = int(top_label_indices[0])
+    # 検出された各物体に対してループ
+    for i in range(top_conf.shape[0]):
+        xmin = int(round(top_xmin[i] * img.shape[1]))
+        ymin = int(round(top_ymin[i] * img.shape[0]))
+        xmax = int(round(top_xmax[i] * img.shape[1]))
+        ymax = int(round(top_ymax[i] * img.shape[0]))
+        score = top_conf[i]
+        label = int(top_label_indices[i])
         label_name = voc_classes[label - 1]
         display_txt = '{:0.2f}, {}'.format(score, label_name)
         coords = (xmin, ymin), xmax-xmin+1, ymax-ymin+1
+        color = colors[label]
+        currentAxis.add_patch(plt.Rectangle(*coords, fill=False, edgecolor=color, linewidth=2))
+        currentAxis.text(xmin, ymin, display_txt, bbox={'facecolor':color, 'alpha':0.5})
+        rospy.loginfo("{} {} {} {}".format(xmin, ymin, xmax, ymax))
+        # plt.show()
+        # plt.pause(0.1)
         res = String()
         res.data = "{} {} {} {} {}".format(label_name, coords[0][0], coords[0][1], coords[1], coords[2])
-        print res.data
-        pub.publish(res)
-        return
-        # color = colors[label]
-        # currentAxis.add_patch(plt.Rectangle(*coords, fill=False, edgecolor=color, linewidth=2))
-        # currentAxis.text(xmin, ymin, display_txt, bbox={'facecolor':color, 'alpha':0.5})
+        pub_array.publish(res)
+    pub_image.publish(CvBridge().cv2_to_imgmsg(pltfig2cvimage(fig), "bgr8"))
+    return
 
 
+def pltfig2cvimage(fig):
+    fig.canvas.draw()
+    cvimg = np.fromstring(fig.canvas.tostring_rgb(),dtype=np.uint8, sep="")
+    cvimg = cvimg.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    cvimg = cv2.cvtColor(cvimg, cv2.COLOR_RGB2BGR)
+    return cvimg
 
 
 if __name__ == '__main__':
